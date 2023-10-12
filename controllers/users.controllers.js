@@ -32,7 +32,7 @@ module.exports.login = (req, res) => {
 
 // CREATE user
 module.exports.create = async (req, res) => {
-  // console.log("body:", req.body);
+  console.log("body:", req.body);
   try {
     const { name, email, password } = req.body;
     const user = new User({ name, email, password, active: false });
@@ -45,6 +45,7 @@ module.exports.create = async (req, res) => {
     const confirmationLink = `http://localhost:8000/api/users/confirm/${token}`;
     res.status(201).json({ user, confirmationLink });
   } catch (error) {
+    console.log(error);
     res.status(400).json({ message: "Error creating user" }); // 400 Bad Request
   }
   bcrypt.hash(req.body.password, 10).then((hash) => {
@@ -97,6 +98,7 @@ exports.login = async (req, res) => {
     const token = jwt.sign({ email }, jwtSecret);
     res.status(200).json({ token });
   } catch (error) {
+    console.log(error);
     res.status(400).json({ message: error.message });
   }
 };
@@ -114,6 +116,7 @@ exports.create = async (req, res) => {
     const confirmationLink = `http://localhost:8000/api/users/confirm/${token}`;
     res.status(201).json({ user, confirmationLink });
   } catch (error) {
+    console.log(error);
     res.status(400).json({ message: error.message });
   }
 };
