@@ -3,7 +3,6 @@ const router = express.Router();
 const posts = require("../controllers/posts.controllers");
 const users = require("../controllers/users.controllers");
 const middleware = require("../middlewares/secure.middleware");
-const userController = require("../controllers/auth.controllers");
 
 router.post("/api/posts", middleware.checkAuth, posts.create);
 router.get("/api/posts", middleware.checkAuth, posts.list);
