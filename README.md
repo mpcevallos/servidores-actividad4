@@ -23,11 +23,11 @@ Diseño y programación de un modelo Mongoose "User" con los siguientes campos y
 # API HTTP
 Codifica los siguientes endpoints HTTP sobre el API:
 
-# POST localhost:8000/api/users
+# POST http://localhost:8000/api/users
 - Recibe body JSON con los campos name, email, password y bio.
 - Almacena el usuario en Base de Datos en memoria cifrando su contraseña.
 
-# POST localhost:8000/api/login
+# POST http://localhost:8000/api/login
 - Recibe body con email, password
 - Devuelve HTTP 200 OK con token JWT de sesión si las credenciales son correctas.
 - Devuelve HTTP 400 en caso de error en la validación de datos.
