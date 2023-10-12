@@ -16,16 +16,16 @@ Levanta el API en el puerto 8000.
 # GET http://localhost:8000/api/posts
 - Devuelve HTTP 200 OK con el listado JSON de posts almacenados en la Base de Datos en memoria.
 
-# GET http://localhost:8000/api/posts/:id
+# GET http://localhost:8000/api/posts/id
 - Devuelve 200 OK con detalle de un Post JSON almacenado en la Base de Datos en memoria.
 - Devuelve 404 si el post no existe en la Base de Datos en memoria.
 
-# PATCH http://localhost:8000/api/posts/:id
+# PATCH http://localhost:8000/api/posts/id
 - Recibe body JSON con alguno de los campos title, text y author.
 - Devuelve 200 OK con detalle de un Post JSON almacenado en la Base de Datos en memoria tras modificar sus atributos con lo indicado en el body.
 - Devuelve 404 si el post no existe en la Base de Datos en memoria.
 
-# DELETE http://localhost:8000/api/posts/:id
+# DELETE http://localhost:8000/api/posts/id
 - Devuelve HTTP 204 tras eliminar el post id == <id> de la Base de Datos en memoria.
 - Devuelve 404 si el post no existe en la Base de Datos en memoria.
 
