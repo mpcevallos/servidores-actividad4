@@ -1,5 +1,6 @@
 const Post = require("../models/posts.model")
 
+
 // Crear un post con campos definidos: Title, Text y Author.
 module.exports.create = (req, res) => {
   Post.create(req.body)

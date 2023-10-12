@@ -1,15 +1,19 @@
-const express = require("express")
+const express = require("express");
 
-const app = express()
+const app = express();
 
-require("./config/db.config")
+require("./config/db.config");
 
-app.use(express.json())
+app.use(express.json());
 
-const router = require("./config/router.config")
+app.use((req, res, next) => {
+  console.log("request received:", req.method, req.path);
+  next();
+});
 
-app.use(router)
+const router = require("./config/router.config");
+app.use(router);
 
 app.listen(8000, () => {
-  console.log("Servidor corriendo en el puerto 8000")
-})
+  console.log("Servidor conectado al puerto 8000");
+});
