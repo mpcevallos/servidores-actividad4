@@ -1,7 +1,7 @@
 {
-  "name": "servidores-actividad2",
+  "name": "servidores-actividad3",
   "version": "1.0.0",
-  "description": "Actividad 2 - API CRUD para modelo Post con Node.js, Express y Mongoose",
+  "description": "Actividad 3",
   "main": "index.js",
   "scripts": {
     "start": "nodemon app.js",

@@ -63,14 +63,6 @@ module.exports.list = (req, res) => {
 
 // GET user by Id
 module.exports.detail = (req, res) => {
-  try {
-    const authorization = req.headers.authorization;
-    const token = authorization.split("Bearer ")[1];
-    jwt.verify(token, "super-secret");
-  } catch (error) {
-    return res.status(401).json({ message: "Unauthorized", error: error });
-  }
-
   User.findById(req.params.id).then((user) => {
     // req.params.id contains the id from the url
     if (user) {
