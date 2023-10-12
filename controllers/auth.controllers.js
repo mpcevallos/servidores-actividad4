@@ -6,7 +6,7 @@ exports.create = async (req, res) => {
   try {
     const { name, email, password } = req.body;
     const user = new User({ name, email, password, active: false });
-    const token = jwt.sign({ email }, "super-secret", {
+    const token = jwt.sign({ email }, jwtSecret, {
       expiresIn: "1h",
       subject: user._id.toString(),
     });
