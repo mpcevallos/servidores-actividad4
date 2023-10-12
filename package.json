@@ -1,0 +1,20 @@
+{
+  "name": "servidores-actividad2",
+  "version": "1.0.0",
+  "description": "Actividad 2 - API CRUD para modelo Post con Node.js, Express y Mongoose",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "María Paula Cevallos",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongodb-memory-server": "^9.0.0",
+    "mongoose": "^7.6.1",
+    "morgan": "^1.10.0",
+    "nodemon": "^3.0.1"
+  }
+}
