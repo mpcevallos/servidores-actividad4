@@ -26,6 +26,15 @@ const userSchema = new mongoose.Schema(
       type: String,
       maxlength: [60, "La biografía no puede tener más de 60 caracteres."],
     },
+    confirmation: {
+      type: String,
+      unique: true,
+      required: [true, "Se requiere confirmación."],
+    },
+    confirmationToken: {
+      type: String,
+      required: false,
+    },
     active: {
       type: Boolean,
       default: false,

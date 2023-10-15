@@ -16,6 +16,7 @@ router.get("/api/users", users.list);
 router.get("/api/users/:id", users.detail);
 router.patch("/api/users/:id", users.update);
 router.delete("/api/users/:id", users.delete);
-router.get("/api/users/confirm/:token", middleware.checkAuth, users.confirm);
+
+router.get("/api/users/confirm/:id", users.confirm);
 
 module.exports = router;

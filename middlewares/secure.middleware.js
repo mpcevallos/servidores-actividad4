@@ -13,11 +13,11 @@ module.exports.checkAuth = (req, res, next) => {
 
     const token = authorization.split("Bearer ")[1];
     const decoded = jwt.verify(token, jwtSecret);
-
-    if (!decoded) {
-      return res.status(401).json({ message: "Token inválido o expirado" });
+    if (decoded) {
+      return res.status(200).json({ token });
     }
     // Si todas las comprobaciones pasan, continúa con la ejecución
+    res.status(200).json({ message: "Token válido" });
     next();
   } catch (error) {
     console.error(error);

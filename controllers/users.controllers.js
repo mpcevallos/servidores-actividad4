@@ -1,179 +1,173 @@
-const jwtSecret = process.env.JWT_SECRET;
-const User = require("../models/users.model"); // import users model
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+const jwtSecret = process.env.JWT_SECRET || "super-secret"; // Importar el secreto del JWT
+const User = require("../models/users.model"); // Importar el modelo de usuarios
+const bcrypt = require("bcrypt"); // Importar el paquete bcrypt
+const jwt = require("jsonwebtoken"); // Importar el paquete jsonwebtoken
+const findUser = require("./findUser"); // Importar la función para buscar el usuario en la base de datos
+const generateJWT = require("./JWT"); // Importar la función para generar el JWT
 
-module.exports.login = (req, res) => {
-  User.findOne({
-    email: req.body.email,
-  }).then((user) => {
-    if (user) {
-      bcrypt.compare(req.body.password, user.password).then((match) => {
-        if (match) {
-          const token = jwt.sign(
-            { sub: user._id, exp: Date.now() / 1000 + 3600 },
-            "super-secret"
-          );
-
-          res.json({ token: token });
-        } else {
-          res
-            .status(400)
-            .json({ message: "Unauthorized: Error de validación de datos" });
-        }
-      });
-    } else {
-      res
-        .status(401)
-        .json({ message: "Unauthorized: Credenciales incorrectas" });
-    }
-  });
-};
-
-// CREATE user
-module.exports.create = async (req, res) => {
-  console.log("body:", req.body);
+module.exports.login = async (req, res, next) => {
+  console.log("Entro al controlador de login");
   try {
-    const { name, email, password } = req.body;
-    const user = new User({ name, email, password, active: false });
-    const token = jwt.sign(
-      { email, sub: user._id, exp: Date.now() / 1000 + 3600 },
-      "super-secret"
+    // Validar que el usuario y la contraseña no estén vacíos
+    if (!req.body.email || !req.body.password) {
+      return res.status(400).json({ error: "Invalid login credentials" });
+    }
+    // Buscar el usuario en la base de datos
+    const user = await findUser(req.body.email);
+    console.log(user);
+
+    // Si no existe el usuario, devolver un error
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+    // Si existe el usuario, validar la contraseña
+    const isPasswordValid = await bcrypt.compare(
+      req.body.password,
+      user.password
     );
-    user.token = token;
-    await user.save();
-    const confirmationLink = `http://localhost:8000/api/users/confirm/${token}`;
-    res.status(201).json({ user, confirmationLink });
-  } catch (error) {
-    console.log(error);
-    res.status(400).json({ message: "Error creating user" }); // 400 Bad Request
-  }
-  bcrypt.hash(req.body.password, 10).then((hash) => {
-    req.body.password = hash;
+    console.log(isPasswordValid);
 
-    User.create(req.body)
-      .then((user) => {
-        // req.body contains the form data (or JSON)
-        res.status(201).json(user); // 201 Created
-      })
-      .catch(() => {
-        res.status(400).json({ message: "Error creating user" }); // 400 Bad Request
-      });
-  });
-};
-
-exports.confirm = async (req, res) => {
-  try {
-    const { token } = req.params;
-    const user = await User.findOne({ token });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    // Si la contraseña no es válida, devolver un error
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    user.active = true; // set active to true
-    user.token = ""; // remove token
-    await user.save(); // save user to db
+    // Si la contraseña es válida, generar el token JWT
+    const token = generateJWT(user);
+    console.log(token);
 
-    res.status(200).json({ message: "Account confirmed" });
+    // Enviar el token JWT en la respuesta
+    res.json({ token });
+    console.log({ token });
   } catch (error) {
-    console.log(error);
-    res.status(400).json({ message: error.message });
+    console.error(error);
+    res.status(401).json({ error: "Invalid credentials" });
   }
 };
 
-exports.login = async (req, res) => {
+module.exports.create = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-    if (!user.active) {
-      return res.status(401).json({ message: "Account not confirmed" });
-    }
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-    const token = jwt.sign({ email }, jwtSecret);
-    res.status(200).json({ token });
-  } catch (error) {
-    console.log(error);
-    res.status(400).json({ message: error.message });
-  }
-};
+    // Validar que no falten campos obligatorios
+    const { name, email, password, bio, active, confirmation } = req.body;
 
-exports.create = async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-    const user = new User({ name, email, password, active: false });
-    const token = jwt.sign({ email }, "super-secret", {
-      expiresIn: "1h",
-      subject: user._id.toString(),
+    if (!name || !email || !password || !bio || confirmation === undefined) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing required fields" });
+    }
+
+    // Validar que el email no esté registrado
+    if (password !== confirmation) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Passwords do not match" });
+    }
+
+    // Validar que el email no esté registrado
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Crear el usuario en la base de datos
+    const newUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+      bio,
+      active,
+      confirmation,
     });
-    user.token = token;
-    await user.save();
-    const confirmationLink = `http://localhost:8000/api/users/confirm/${token}`;
-    res.status(201).json({ user, confirmationLink });
+
+    // Guardar el usuario en la base de datos
+    const savedUser = await newUser.save();
+
+    // Generar el token de confirmación
+    const token = generateJWT(savedUser);
+
+    // Enviar la respuesta con el token de confirmación y URL de confirmación
+    res.status(201).json({
+      message: "User created successfully",
+      data: savedUser,
+      confirmationToken: token,
+      URLConfirmacion: `http://localhost:8000/api/users/confirm/${savedUser._id}`,
+    });
   } catch (error) {
-    console.log(error);
-    res.status(400).json({ message: error.message });
+    // Si hay un error, devolver un error de servidor
+    console.error(error);
+    res.status(401).json({ error: "Invalid credentials" });
   }
 };
 
-// GET user list
+module.exports.confirm = async (req, res, next) => {
+  try {
+    // Validar que no falten campos obligatorios y que el token no esté vacío
+    const token = req.body.token;
+    const decodedToken = jwt.verify(token, jwtSecret);
+    const userId = decodedToken.userId;
+
+    // Buscar el usuario en la base de datos
+    const user = await User.findById(userId);
+
+    // Si no existe el usuario, devolver un error
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Actualizar el usuario a activo y guardar en la base de datos
+    user.active = true;
+    await user.save();
+
+    // Enviar la respuesta y mensaje de confirmación
+    res.status(200).json({ message: "User account has been activated" });
+  } catch (error) {
+    console.error(error);
+    res.status(401).json({ error: "Invalid credentials" });
+  }
+};
+
 module.exports.list = (req, res) => {
-  const criteria = {}; // empty object means find all
+  const criteria = { active: true }; // Solo usuarios verificados};
 
   if (req.query.name) {
-    // req.query contains the query string parameters
-    criteria.name = new RegExp(req.query.name, "i"); // i for case insensitive
+    criteria.name = new RegExp(req.query.name, "i");
   }
 
   User.find(criteria).then((users) => {
-    // criteria filters the results
-    res.json(users); // 200 OK
+    res.json(users);
   });
 };
 
-// GET user by Id
 module.exports.detail = (req, res) => {
   User.findById(req.params.id).then((user) => {
-    // req.params.id contains the id from the url
     if (user) {
-      res.json(user); // 200 OK
+      res.json(user);
     } else {
-      res.status(404).json({ message: "User not found" }); // 404 Not Found
+      res.status(404).json({ message: "User not found" });
     }
   });
 };
 
-// PATCH user by Id
 module.exports.update = (req, res) => {
   User.findByIdAndUpdate(req.params.id, req.body, {
-    // req.body contains the updated data
-    new: true, // return updated user instead of old user
+    new: true,
     runValidators: true,
   })
     .then((user) => {
       if (user) {
-        res.json(user); // 200 OK
+        res.json(user);
       } else {
-        res.status(404).json({ message: "User not found" }); // 404 Not Found
+        res.status(404).json({ message: "User not found" });
       }
     })
     .catch(() => {
-      res.status(400).json({ message: "Error updating user" }); // 400 Bad Request
+      res.status(400).json({ message: "Error updating user" });
     });
 };
 
-// DETELE user by Id
 module.exports.delete = (req, res) => {
   User.findByIdAndDelete(req.params.id).then((user) => {
     if (user) {
-      res.status(204).json(); // 204 No Content
+      res.status(204).json();
     } else {
-      res.status(404).json({ message: "User not found" }); // 404 Not Found
+      res.status(404).json({ message: "User not found" });
     }
   });
 };
